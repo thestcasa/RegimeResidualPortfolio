@@ -1,0 +1,115 @@
+project:
+  name: regime_residual_portfolio
+  seed: 42
+  deterministic_torch: true
+  output_dir: results
+  model_dir: models
+  cache_dir: data_cache
+
+data:
+  source_priority: ["stooq", "yfinance"]
+  benchmark: SPY
+  start_date: "2012-01-01"
+  end_date: "2025-01-31"
+  frequency: daily
+  save_intermediate_parquet: true
+  universe:
+    mode: etf
+    tickers:
+      - SPY
+      - QQQ
+      - IWM
+      - DIA
+      - EFA
+      - EEM
+      - TLT
+      - IEF
+      - SHY
+      - LQD
+      - HYG
+      - XLF
+      - XLK
+      - XLE
+      - XLI
+      - XLP
+      - XLY
+      - XLV
+      - XLU
+      - XLB
+      - VNQ
+      - GLD
+      - SLV
+      - USO
+
+factors:
+  use_ken_french_if_available: true
+  rolling_beta_window: 126
+  market_premium_window: 21
+
+features:
+  skip_recent_days: 5
+  momentum_windows: [21, 63, 126, 252]
+  reversal_windows: [5, 21]
+  vol_windows: [21, 63]
+  drawdown_window: 252
+  liquidity_window: 21
+  beta_window: 126
+  corr_window: 63
+  add_trend: true
+  add_skew_kurtosis: true
+
+labels:
+  horizon_days: 21
+  model: capm
+
+walkforward:
+  mode: expanding
+  min_train_months: 36
+  val_months: 12
+  embargo_months: 1
+
+model:
+  type: mlp
+  hidden_dims: [128, 64]
+  dropout: 0.2
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 256
+  epochs: 80
+  early_stopping_patience: 8
+  loss: huber
+  mc_dropout_samples: 30
+
+portfolio:
+  method: topk_equal
+  top_k: 8
+  max_weight: 0.2
+  beta_neutral: false
+  beta_target: 1.0
+  uncertainty_threshold: 0.04
+  alpha_threshold: 0.0
+  turnover_cap: 1.0
+  turnover_penalty: 0.0
+
+costs:
+  transaction_bps_per_turnover: 5.0
+  slippage_bps_per_turnover: 3.0
+
+baselines:
+  equal_weight: true
+  momentum_12_1: true
+  ridge: true
+  random_forest: false
+
+wandb:
+  enabled: true
+  project: regime-residual-portfolio
+  entity: null
+  mode: auto
+  tags: ["finance", "residual-alpha", "walkforward"]
+
+robustness:
+  rolling_window_months: 12
+  subperiod_splits: ["2020-01-01"]
+  bootstrap_samples: 500
+  block_size: 3
